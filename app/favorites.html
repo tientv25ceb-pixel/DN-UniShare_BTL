@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yêu thích — ĐN-UniShare</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+  <header id="site-header"></header>
+  <main class="page-wrap container">
+    <a href="items.html" class="btn btn--ghost btn--sm" style="margin-bottom:var(--space-4)">← Quay lại khám phá</a>
+
+    <div class="page-hero">
+      <h1>❤️ Món đồ yêu thích</h1>
+      <p>Những món đồ bạn đã lưu lại để xem sau.</p>
+    </div>
+
+    <div class="item-grid" id="favorites-grid"></div>
+  </main>
+  <nav id="bottom-nav"></nav>
+  <script type="module">
+    import { requireAuth } from '../js/auth.js'
+    import { initSiteLayout } from '../js/layout.js'
+    import { fetchFavoriteIds } from '../js/favorites.js'
+    import { renderItemCard } from '../js/items.js'
+    import { supabase } from '../js/supabase.js'
+    import { renderSkeletonCards } from '../js/ui.js'
+
+    await requireAuth()
+    await initSiteLayout('favorites')
+
+    const grid = document.getElementById('favorites-grid')
+    grid.innerHTML = renderSkeletonCards(4)
+
+    try {
+      const favIds = await fetchFavoriteIds()
+
+      if (!favIds.length) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1">
+            <div class="empty-state__icon">💔</div>
+            <p class="empty-state__title">Chưa có món đồ yêu thích</p>
+            <p style="margin-bottom:var(--space-4)">Nhấn vào trái tim trên món đồ để lưu lại.</p>
+            <a href="items.html" class="btn btn--primary">Khám phá món đồ</a>
+          </div>
+        `
+      } else {
+        const { data, error } = await supabase
+          .from('items')
+          .select('*')
+          .in('id', favIds)
+          .in('status', ['available', 'reserved'])
+          .order('created_at', { ascending: false })
+
+        if (error) throw error
+
+        const items = data || []
+        grid.innerHTML = items.length
+          ? items.map((item) => renderItemCard(item, { favorited: true })).join('')
+          : `
+            <div class="empty-state" style="grid-column:1/-1">
+              <div class="empty-state__icon">💔</div>
+              <p class="empty-state__title">Món yêu thích không còn khả dụng</p>
+              <a href="items.html" class="btn btn--primary" style="margin-top:var(--space-4)">Khám phá món đồ</a>
+            </div>
+          `
+      }
+    } catch (err) {
+      grid.innerHTML = `<p style="color:var(--color-danger);grid-column:1/-1;text-align:center">${err.message}</p>`
+    }
+  </script>
+</body>
+</html>

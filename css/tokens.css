@@ -1,0 +1,79 @@
+:root {
+  --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
+
+  --dn-surface: #0a0a0b;
+  --dn-surface-elevated: #121214;
+  --dn-surface-raised: #1a1a1d;
+  --dn-text-primary: #f1f1f3;
+  --dn-text-secondary: #909098;
+  --dn-text-tertiary: #5c5c62;
+  --dn-accent: #3b82f6;
+  --dn-accent-dim: #2563eb;
+  --dn-accent-glow: rgba(59, 130, 246, 0.15);
+  --dn-accent-soft: rgba(59, 130, 246, 0.08);
+  --dn-border: rgba(255, 255, 255, 0.06);
+  --dn-border-strong: var(--dn-accent);
+
+  --color-bg: var(--dn-surface);
+  --color-surface: var(--dn-surface-elevated);
+  --color-border: var(--dn-border);
+  --color-border-light: rgba(255, 255, 255, 0.04);
+  --color-text: var(--dn-text-primary);
+  --color-text-secondary: var(--dn-text-secondary);
+  --color-text-muted: var(--dn-text-tertiary);
+  --color-primary: var(--dn-accent);
+  --color-primary-hover: var(--dn-accent-dim);
+  --color-primary-light: var(--dn-accent-soft);
+  --color-accent: #22d3ee;
+  --color-accent-light: rgba(34, 211, 238, 0.1);
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 24px 60px rgba(0, 0, 0, 0.55);
+  --shadow-glow: 0 0 30px var(--dn-accent-glow);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  --container-max: 1200px;
+  --header-height: 72px;
+
+  --duration: 200ms;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --dn-surface: #fafafa;
+    --dn-surface-elevated: #ffffff;
+    --dn-surface-raised: #f5f5f5;
+    --dn-text-primary: #18181b;
+    --dn-text-secondary: #52525b;
+    --dn-text-tertiary: #a1a1aa;
+    --dn-accent: #2563eb;
+    --dn-accent-dim: #1d4ed8;
+    --dn-accent-glow: rgba(37, 99, 235, 0.1);
+    --dn-accent-soft: rgba(37, 99, 235, 0.06);
+    --dn-border: rgba(0, 0, 0, 0.06);
+  }
+}

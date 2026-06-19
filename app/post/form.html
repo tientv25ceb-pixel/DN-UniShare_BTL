@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng tin — ĐN-UniShare</title>
+  <link rel="stylesheet" href="../../css/tokens.css">
+  <link rel="stylesheet" href="../../css/base.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/app.css">
+  <style>
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+    @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
+    .post-form { max-width: 640px; }
+    .image-preview { display: none; max-width: 240px; margin-top: var(--space-3); border-radius: var(--radius-md); }
+    .image-preview.visible { display: block; }
+    .post-success { text-align:center; padding:var(--space-10) var(--space-6); background:var(--dn-surface-elevated); border:1px solid var(--dn-border); border-radius:var(--radius-xl); }
+    .post-success__icon { font-size:3rem; margin-bottom:var(--space-4); }
+    .post-success__actions { display:flex; gap:var(--space-3); justify-content:center; flex-wrap:wrap; margin-top:var(--space-6); }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header id="site-header"></header>
+  <main class="page-wrap container">
+    <a href="index.html" class="btn btn--ghost btn--sm" style="margin-bottom:var(--space-4)">← Quay lại</a>
+
+    <div class="page-hero">
+      <h1 id="form-title">Đăng tin</h1>
+      <p id="form-desc">Điền thông tin món đồ bạn muốn chia sẻ.</p>
+      <p id="form-hint" class="form-hint" style="margin-top:var(--space-2)"></p>
+    </div>
+
+    <div id="post-form-wrap">
+    <form class="post-form" id="post-form">
+      <div class="form-group">
+        <label class="form-label" for="title">Tiêu đề *</label>
+        <input class="form-input" type="text" id="title" required placeholder="VD: Giáo trình Lập trình C++">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="description">Mô tả *</label>
+        <textarea class="form-textarea" id="description" required placeholder="Mô tả chi tiết về món đồ..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="category">Danh mục *</label>
+          <select class="form-select" id="category" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="condition">Tình trạng *</label>
+          <select class="form-select" id="condition" required></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="location">Địa điểm hẹn *</label>
+        <div class="location-picker">
+          <div class="location-picker__toolbar">
+            <select class="form-select" id="location-preset">
+              <option value="">— Chọn nhanh khu vực —</option>
+            </select>
+            <button type="button" class="btn btn--secondary btn--sm" id="btn-locate">📍 GPS</button>
+          </div>
+          <input class="form-input" type="text" id="location" required readonly placeholder="Ghim điểm hẹn (tự điền khi chọn vị trí)">
+          <input type="hidden" id="latitude">
+          <input type="hidden" id="longitude">
+          <div id="location-map" class="map-canvas map-canvas--picker"></div>
+        </div>
+      </div>
+      <div id="extra-fields"></div>
+      <div class="form-group">
+        <label class="form-label" for="image">Ảnh sản phẩm</label>
+        <input class="form-input" type="file" id="image" accept="image/*">
+        <p class="form-hint">JPG, PNG — tối đa 5MB</p>
+        <img class="image-preview" id="image-preview" alt="Preview">
+      </div>
+      <button type="submit" class="btn btn--primary" id="btn-submit">Đăng tin</button>
+    </form>
+    </div>
+  </main>
+  <nav id="bottom-nav"></nav>
+  <script type="module">
+    import { requireAuth } from '../../js/auth.js'
+    import { initSiteLayout } from '../../js/layout.js'
+    import { initPostForm } from '../../js/post-form.js'
+    import { POST_TYPES, ACTIVE_POST_TYPES } from '../../js/constants.js'
+
+    await requireAuth('../../auth/login.html')
+    await initSiteLayout('post')
+
+    const params = new URLSearchParams(window.location.search)
+    const type = params.get('type')
+
+    if (!type || !POST_TYPES[type] || !ACTIVE_POST_TYPES.includes(type)) {
+      window.location.href = 'index.html'
+    } else {
+      await initPostForm(type)
+    }
+  </script>
+</body>
+</html>

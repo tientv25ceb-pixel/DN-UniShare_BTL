@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tìm đồ quanh đây — ĐN-UniShare</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/app.css">
+  <style>
+    .nearby-note {
+      padding: var(--space-4); margin-bottom: var(--space-6);
+      background: var(--dn-accent-soft); border: 1px solid var(--dn-accent-dim);
+      border-radius: var(--radius-lg); font-size: 0.875rem; color: var(--color-text-secondary);
+    }
+    .nearby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-4); }
+    .nearby-card {
+      display: flex; gap: var(--space-3); padding: var(--space-4);
+      background: var(--dn-surface-elevated); border: 1px solid var(--dn-border);
+      border-radius: var(--radius-lg); text-align: left; width: 100%;
+      cursor: pointer; transition: border-color var(--duration), transform var(--duration);
+    }
+    .nearby-card:hover { border-color: var(--dn-accent-dim); transform: translateY(-2px); }
+    .nearby-card img { width: 72px; height: 72px; object-fit: cover; border-radius: var(--radius-md); flex-shrink: 0; }
+    .nearby-card__body { flex: 1; min-width: 0; }
+    .nearby-card__dist {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.75rem; font-weight: 700; color: var(--dn-accent);
+      background: var(--dn-accent-soft); padding: 2px 8px; border-radius: var(--radius-full);
+    }
+    .nearby-card__title { font-weight: 700; font-size: 0.9375rem; margin: 6px 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .nearby-card__loc { font-size: 0.75rem; color: var(--color-text-secondary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .nearby-stats { display: flex; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-4); font-size: 0.8125rem; color: var(--color-text-secondary); }
+  </style>
+</head>
+<body>
+  <header id="site-header"></header>
+  <main class="page-wrap container">
+    <div class="page-hero">
+      <h1>📍 Tìm đồ quanh đây</h1>
+      <p>Sắp xếp theo khoảng cách từ vị trí bạn đến <strong>điểm hẹn</strong> mà người đăng đã ghim khi đăng tin.</p>
+    </div>
+
+    <div class="nearby-note">
+      💡 Mỗi tin đăng có điểm hẹn do người đăng chọn khi up bài. Hệ thống lấy tọa độ đó so với vị trí của bạn (GPS hoặc khu vực chọn) để tính khoảng cách — không cần mở bản đồ.
+    </div>
+
+    <div class="filters-bar">
+      <select id="my-location" class="form-select" style="flex:1;max-width:360px">
+        <option value="">— Chọn khu vực của bạn —</option>
+      </select>
+      <button type="button" class="btn btn--secondary btn--sm" id="btn-gps">📍 GPS của tôi</button>
+      <select id="filter-type" class="form-select" style="max-width:180px">
+        <option value="">Tất cả loại</option>
+        <option value="mienphi">Tặng miễn phí</option>
+        <option value="traodoi">Trao đổi</option>
+        <option value="sale">Bán rẻ</option>
+        <option value="lost">Tìm đồ</option>
+      </select>
+    </div>
+
+    <div class="nearby-stats">
+      <span>Tìm thấy: <strong id="item-count">0</strong> món</span>
+      <span>Phạm vi: <strong>1.5 km</strong></span>
+      <span id="gps-status"></span>
+    </div>
+
+    <div class="nearby-grid" id="nearby-grid">
+      <p style="grid-column:1/-1;text-align:center;color:var(--color-text-secondary)">Đang tải...</p>
+    </div>
+  </main>
+  <nav id="bottom-nav"></nav>
+  <script type="module">
+    import { requireAuth } from '../js/auth.js'
+    import { initSiteLayout } from '../js/layout.js'
+    import { fetchAvailableItems } from '../js/items.js'
+    import { LOCATIONS, LOCATION_COORDS, EXCHANGE_LABELS, CATEGORY_MAP } from '../js/constants.js'
+    import { rankNearbyItems, formatDistance } from '../js/nearby.js'
+    import { showToast } from '../js/ui.js'
+
+    await requireAuth()
+    await initSiteLayout('nearby')
+
+    const locSel = document.getElementById('my-location')
+    const gridEl = document.getElementById('nearby-grid')
+    const filterSel = document.getElementById('filter-type')
+    const gpsStatus = document.getElementById('gps-status')
+    let allItems = []
+    let userPos = null
+
+    LOCATIONS.forEach((loc) => {
+      const opt = document.createElement('option')
+      opt.value = loc
+      opt.textContent = loc
+      if (loc.includes('VKU')) opt.selected = true
+      locSel.appendChild(opt)
+    })
+
+    function getCenter() {
+      if (userPos) return userPos
+      const c = LOCATION_COORDS[locSel.value]
+      return c || LOCATION_COORDS['Đại học Công nghệ Thông tin & TT Việt-Hàn (VKU)']
+    }
+
+    function render() {
+      const detected = rankNearbyItems(allItems, getCenter(), {
+        maxRange: 1500,
+        typeFilter: filterSel.value,
+      })
+
+      document.getElementById('item-count').textContent = detected.length
+
+      if (!detected.length) {
+        gridEl.innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1;padding:var(--space-10)">
+            <div class="empty-state__icon">📍</div>
+            <p class="empty-state__title">Không có món đồ gần đây</p>
+            <p style="font-size:0.875rem;color:var(--color-text-secondary)">Thử đổi khu vực, bật GPS hoặc đổi bộ lọc loại tin.</p>
+            <a href="items.html" class="btn btn--primary" style="margin-top:var(--space-4)">Khám phá tất cả</a>
+          </div>
+        `
+        return
+      }
+
+      gridEl.innerHTML = detected.map((item) => {
+        const cat = CATEGORY_MAP[item.category] || { emoji: '📦', label: 'Khác' }
+        const img = item.image || 'https://placehold.co/120x120/1a1a1d/5c5c62?text=?'
+        const pinTag = item.hasPosterCoords ? 'Ghim chính xác' : 'Khu vực gần đúng'
+        return `
+          <article class="nearby-card" data-href="detail.html?id=${item.id}">
+            <img src="${img}" alt="" loading="lazy">
+            <div class="nearby-card__body">
+              <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+                <span class="badge badge--accent" style="font-size:0.6875rem">${EXCHANGE_LABELS[item.exchange_type]}</span>
+                <span class="nearby-card__dist">${formatDistance(item.distance)}</span>
+              </div>
+              <h3 class="nearby-card__title">${item.title}</h3>
+              <p class="nearby-card__loc">📍 ${item.location}</p>
+              <p class="card__meta" style="margin-top:6px">${cat.emoji} ${cat.label} · ${pinTag}</p>
+            </div>
+          </article>
+        `
+      }).join('')
+
+      gridEl.querySelectorAll('.nearby-card').forEach((card) => {
+        card.addEventListener('click', () => { location.href = card.dataset.href })
+      })
+    }
+
+    async function loadItems() {
+      gridEl.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--color-text-secondary)">Đang tải...</p>'
+      try {
+        allItems = await fetchAvailableItems()
+        render()
+      } catch (err) {
+        gridEl.innerHTML = `<p style="grid-column:1/-1;color:var(--color-danger);text-align:center">${err.message}</p>`
+      }
+    }
+
+    locSel.addEventListener('change', () => {
+      userPos = null
+      gpsStatus.textContent = ''
+      render()
+    })
+    filterSel.addEventListener('change', render)
+
+    document.getElementById('btn-gps').addEventListener('click', () => {
+      if (!navigator.geolocation) return showToast('Trình duyệt không hỗ trợ GPS', 'error')
+      document.getElementById('btn-gps').disabled = true
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+          locSel.value = ''
+          gpsStatus.textContent = 'Đang dùng vị trí GPS'
+          showToast('Đã lấy vị trí GPS', 'success')
+          render()
+          document.getElementById('btn-gps').disabled = false
+        },
+        () => {
+          showToast('Không lấy được vị trí GPS', 'error')
+          document.getElementById('btn-gps').disabled = false
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      )
+    })
+
+    loadItems()
+  </script>
+</body>
+</html>

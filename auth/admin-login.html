@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập Admin — ĐN-UniShare</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-card">
+      <a href="../index.html" class="auth-card__logo">
+        <div class="nav__logo-icon">ĐN</div>
+        ĐN-UniShare
+      </a>
+      <h1 class="auth-card__title">Đăng nhập Admin</h1>
+      <p class="auth-card__subtitle">
+        Chỉ dành cho quản trị viên. Tài khoản admin được tạo sẵn trong hệ thống.
+      </p>
+
+      <form id="admin-form">
+        <div class="form-group">
+          <label class="form-label" for="email">Email admin</label>
+          <input class="form-input" type="email" id="email" required placeholder="admin@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="password">Mật khẩu</label>
+          <input class="form-input" type="password" id="password" required minlength="6" placeholder="••••••••">
+        </div>
+        <p class="form-error" id="error-msg" hidden></p>
+        <button type="submit" class="btn btn--primary btn--full" id="btn-submit">Đăng nhập Admin</button>
+      </form>
+
+      <p class="auth-card__footer">
+        Sinh viên? <a href="login.html">Đăng nhập bằng Google</a>
+      </p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { signInAdmin, getProfile, getSession } from '../js/auth.js'
+    import { showToast } from '../js/ui.js'
+
+    const session = await getSession()
+    if (session) {
+      const profile = await getProfile()
+      if (profile?.role === 'admin') {
+        window.location.href = '../app/admin.html'
+      } else {
+        window.location.href = '../app/items.html'
+      }
+    }
+
+    document.getElementById('admin-form').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const btn = document.getElementById('btn-submit')
+      const errEl = document.getElementById('error-msg')
+      errEl.hidden = true
+      btn.disabled = true
+      btn.textContent = 'Đang đăng nhập...'
+
+      try {
+        await signInAdmin(
+          document.getElementById('email').value.trim(),
+          document.getElementById('password').value
+        )
+        showToast('Đăng nhập admin thành công!', 'success')
+        window.location.href = '../app/admin.html'
+      } catch (err) {
+        errEl.textContent = err.message
+        errEl.hidden = false
+        btn.disabled = false
+        btn.textContent = 'Đăng nhập Admin'
+      }
+    })
+  </script>
+</body>
+</html>

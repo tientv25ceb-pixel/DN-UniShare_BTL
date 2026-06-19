@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Duyệt bài — ĐN-UniShare</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+  <header id="site-header"></header>
+  <main class="page-wrap container">
+    <div class="page-hero">
+      <h1>Duyệt bài đăng</h1>
+      <p>Kiểm duyệt tin trước khi hiển thị công khai.</p>
+    </div>
+    <div class="tabs">
+      <button class="tab tab--active" data-status="pending">Chờ duyệt</button>
+      <button class="tab" data-status="available">Đã duyệt</button>
+      <button class="tab" data-status="rejected">Đã từ chối</button>
+    </div>
+    <div id="admin-list"></div>
+  </main>
+  <nav id="bottom-nav"></nav>
+  <div class="modal-overlay hidden" id="reject-modal">
+    <div class="modal">
+      <h2 class="modal__title">Từ chối bài đăng</h2>
+      <div class="form-group">
+        <label class="form-label" for="reject-reason">Lý do</label>
+        <textarea class="form-textarea" id="reject-reason"></textarea>
+      </div>
+      <div class="modal__actions">
+        <button class="btn btn--secondary" id="btn-cancel-reject">Huỷ</button>
+        <button class="btn btn--danger" id="btn-confirm-reject">Từ chối</button>
+      </div>
+    </div>
+  </div>
+  <script type="module">
+    import { requireAuth, requireAdmin } from '../js/auth.js'
+    import { initSiteLayout } from '../js/layout.js'
+    import { initAdminPage } from '../js/admin.js'
+
+    await requireAuth()
+    await requireAdmin()
+    await initSiteLayout('admin')
+    await initAdminPage()
+  </script>
+</body>
+</html>

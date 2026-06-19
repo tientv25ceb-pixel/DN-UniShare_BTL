@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phòng chat — ĐN-UniShare</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+  <header id="site-header"></header>
+  <main class="page-wrap container" style="max-width:720px">
+    <div id="chat-room-content">Đang tải...</div>
+  </main>
+  <nav id="bottom-nav"></nav>
+  <script type="module">
+    import { requireAuth, getProfile } from '../js/auth.js'
+    import { initSiteLayout } from '../js/layout.js'
+    import { fetchConversations, fetchMessages, sendMessage, subscribeMessages } from '../js/chat.js'
+
+    await requireAuth()
+    await initSiteLayout('chat')
+
+    const params = new URLSearchParams(window.location.search)
+    const convId = params.get('id')
+    const content = document.getElementById('chat-room-content')
+
+    if (!convId) {
+      content.innerHTML = `
+        <div class="empty-state">
+          <p class="empty-state__title">Không tìm thấy hội thoại</p>
+          <a href="chat.html" class="btn btn--primary" style="margin-top:var(--space-4)">← Quay lại tin nhắn</a>
+        </div>
+      `
+    } else {
+      try {
+        const profile = await getProfile()
+        const conversations = await fetchConversations()
+        const conversation = conversations.find((c) => c.id === convId)
+
+        if (!conversation) {
+          content.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state__icon">😢</div>
+              <p class="empty-state__title">Không tìm thấy hội thoại</p>
+              <a href="chat.html" class="btn btn--primary" style="margin-top:var(--space-4)">← Quay lại tin nhắn</a>
+            </div>
+          `
+        } else {
+          const otherIdx = conversation.participant_ids[0] === profile.id ? 1 : 0
+          const otherName = conversation.participant_names[otherIdx] || 'Người dùng'
+
+          content.innerHTML = `
+            <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-6)">
+              <a href="chat.html" class="btn btn--ghost btn--sm">←</a>
+              <div class="chat-row__avatar">${otherName[0]}</div>
+              <div>
+                <p style="font-weight:700">${otherName}</p>
+                ${conversation.item_title ? `<p class="card__meta">📦 <a href="detail.html?id=${conversation.item_id}" style="color:var(--dn-accent)">${conversation.item_title}</a></p>` : ''}
+              </div>
+            </div>
+            <div class="chat-room">
+              <div class="chat-messages" id="messages"></div>
+              <form class="chat-input-bar" id="send-form">
+                <input class="form-input" type="text" id="message-input" placeholder="Nhập tin nhắn..." autocomplete="off" required style="flex:1">
+                <button type="submit" class="btn btn--primary">Gửi</button>
+              </form>
+            </div>
+          `
+
+          const messagesEl = document.getElementById('messages')
+
+          function formatTime(iso) {
+            return new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+          }
+
+          function renderMessage(msg) {
+            const isMine = msg.sender_id === profile.id
+            const bubble = document.createElement('div')
+            bubble.className = `chat-bubble ${isMine ? 'chat-bubble--mine' : 'chat-bubble--other'}`
+            bubble.dataset.id = msg.id
+            bubble.innerHTML = `${msg.text}<div style="font-size:0.625rem;margin-top:4px;opacity:0.7">${formatTime(msg.created_at)}</div>`
+            messagesEl.appendChild(bubble)
+            messagesEl.scrollTop = messagesEl.scrollHeight
+          }
+
+          function renderAll(messages) {
+            if (!messages.length) {
+              messagesEl.innerHTML = `
+                <div class="empty-state" style="padding:var(--space-8)">
+                  <div class="empty-state__icon">💬</div>
+                  <p class="empty-state__title">Bắt đầu trò chuyện</p>
+                  <p style="font-size:0.875rem">Gửi lời chào và thống nhất thời gian, địa điểm nhé!</p>
+                </div>
+              `
+            } else {
+              messagesEl.innerHTML = ''
+              messages.forEach(renderMessage)
+            }
+          }
+
+          const messages = await fetchMessages(convId)
+          renderAll(messages)
+
+          subscribeMessages(convId, (newMsg) => {
+            if (!messagesEl.querySelector(`[data-id="${newMsg.id}"]`)) {
+              if (messagesEl.querySelector('.empty-state')) messagesEl.innerHTML = ''
+              renderMessage(newMsg)
+            }
+          })
+
+          document.getElementById('send-form').addEventListener('submit', async (e) => {
+            e.preventDefault()
+            const input = document.getElementById('message-input')
+            const text = input.value.trim()
+            if (!text) return
+            input.value = ''
+            try {
+              await sendMessage(convId, profile.id, text)
+            } catch (err) {
+              input.value = text
+              alert(err.message)
+            }
+          })
+        }
+      } catch (err) {
+        content.innerHTML = `<p style="color:var(--color-danger);text-align:center">${err.message}</p>`
+      }
+    }
+  </script>
+</body>
+</html>

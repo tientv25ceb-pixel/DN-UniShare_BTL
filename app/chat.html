@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tin nhắn — ĐN-UniShare</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+  <header id="site-header"></header>
+  <main class="page-wrap container" style="max-width:720px">
+    <div class="page-hero">
+      <h1>💬 Tin nhắn</h1>
+      <p>Trao đổi với người đăng về món đồ.</p>
+    </div>
+    <div id="chat-list">Đang tải...</div>
+  </main>
+  <nav id="bottom-nav"></nav>
+  <script type="module">
+    import { requireAuth, getProfile } from '../js/auth.js'
+    import { initSiteLayout } from '../js/layout.js'
+    import { fetchConversations, renderConversationRow } from '../js/chat.js'
+
+    await requireAuth()
+    await initSiteLayout('chat')
+
+    const listEl = document.getElementById('chat-list')
+
+    try {
+      const profile = await getProfile()
+      const conversations = await fetchConversations()
+
+      if (!conversations.length) {
+        listEl.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state__icon">💬</div>
+            <p class="empty-state__title">Chưa có tin nhắn</p>
+            <p style="margin-bottom:var(--space-4)">Khi bạn nhắn tin với người đăng món đồ, hội thoại sẽ hiển thị ở đây.</p>
+            <a href="items.html" class="btn btn--primary">Khám phá món đồ</a>
+          </div>
+        `
+      } else {
+        listEl.innerHTML = conversations.map((c) => renderConversationRow(c, profile.id)).join('')
+      }
+    } catch (err) {
+      listEl.innerHTML = `<p style="color:var(--color-danger);text-align:center">${err.message}</p>`
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tác động — ĐN-UniShare</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+  <header id="site-header"></header>
+  <main class="page-wrap container">
+    <div class="page-hero" style="text-align:center;max-width:640px;margin:0 auto var(--space-8)">
+      <p style="font-size:0.8125rem;font-weight:600;color:var(--dn-accent);margin-bottom:var(--space-2)">🌱 Tác động cộng đồng</p>
+      <h1>Cùng xây dựng Làng Đại học <span class="gradient-text">Xanh & Bền vững</span></h1>
+      <p style="margin-top:var(--space-2)">Mỗi cuốn sách được truyền tay, mỗi món đồ được tái sử dụng đều góp phần bảo vệ môi trường.</p>
+    </div>
+
+    <div class="stat-grid" id="stat-grid">
+      <div class="stat-card">
+        <div class="stat-card__value" data-target="1200" data-suffix="+">0</div>
+        <div class="stat-card__label">Sinh viên tham gia</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__value" data-target="500" data-suffix="+">0</div>
+        <div class="stat-card__label">Món đồ đã chia sẻ</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__value" data-target="380" data-suffix="+">0</div>
+        <div class="stat-card__label">Tổng giao dịch thành công</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__value" data-target="25" data-suffix=" triệu đ">0</div>
+        <div class="stat-card__label">Tổng số tiền giao dịch</div>
+      </div>
+    </div>
+
+    <div style="margin-top:var(--space-12);padding:var(--space-8);background:var(--dn-surface-elevated);border:1px solid var(--dn-border);border-radius:var(--radius-xl)">
+      <h3 style="font-size:1.125rem;font-weight:700;margin-bottom:var(--space-2)">Tử tế — vòng tròn lớn dần</h3>
+      <p style="color:var(--color-text-secondary);font-size:0.9375rem;line-height:1.7">
+        Mỗi món đồ được trao đi không chỉ giúp một người — nó truyền cảm hứng để người đó tiếp tục cho đi.
+        Đó là cách chúng mình xây dựng một cộng đồng sinh viên Đà Nẵng biết sẻ chia, tiết kiệm và bảo vệ môi trường.
+      </p>
+      <div class="stat-grid" style="margin-top:var(--space-6)">
+        <div class="stat-card">
+          <div style="font-size:2rem;font-weight:800" class="gradient-text">98%</div>
+          <div class="stat-card__label">Phản hồi tích cực</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:2rem;font-weight:800" class="gradient-text">12</div>
+          <div class="stat-card__label">Trường ĐH tham gia</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:2rem;font-weight:800" class="gradient-text">24/7</div>
+          <div class="stat-card__label">Kết nối liên tục</div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <nav id="bottom-nav"></nav>
+  <script type="module">
+    import { requireAuth } from '../js/auth.js'
+    import { initSiteLayout } from '../js/layout.js'
+
+    await requireAuth()
+    await initSiteLayout('impact')
+
+    function animateValue(el) {
+      const target = Number(el.dataset.target)
+      const suffix = el.dataset.suffix || ''
+      const duration = 2000
+      const start = performance.now()
+
+      function tick(now) {
+        const progress = Math.min((now - start) / duration, 1)
+        const eased = 1 - Math.pow(1 - progress, 3)
+        const current = Math.round(target * eased)
+        el.textContent = current.toLocaleString('vi-VN') + suffix
+        if (progress < 1) requestAnimationFrame(tick)
+      }
+
+      requestAnimationFrame(tick)
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.querySelectorAll('[data-target]').forEach(animateValue)
+          observer.unobserve(entry.target)
+        }
+      })
+    }, { threshold: 0.3 })
+
+    const grid = document.getElementById('stat-grid')
+    if (grid) observer.observe(grid)
+  </script>
+</body>
+</html>

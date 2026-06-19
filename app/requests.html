@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yêu cầu — ĐN-UniShare</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+  <header id="site-header"></header>
+  <main class="page-wrap container">
+    <div class="page-hero">
+      <h1>Yêu cầu nhận đồ</h1>
+      <p>Quản lý yêu cầu bạn gửi và nhận được.</p>
+    </div>
+    <div class="tabs">
+      <button class="tab tab--active" data-tab="sent">Gửi đi</button>
+      <button class="tab" data-tab="received">Nhận được</button>
+    </div>
+    <div id="requests-list"></div>
+  </main>
+  <nav id="bottom-nav"></nav>
+  <script type="module">
+    import { requireAuth, getProfile } from '../js/auth.js'
+    import { initSiteLayout } from '../js/layout.js'
+    import { fetchSentRequests, fetchReceivedRequests, updateRequestStatus, renderRequestCard } from '../js/requests.js'
+    import { showToast } from '../js/ui.js'
+
+    await requireAuth()
+    await initSiteLayout('requests')
+
+    const listEl = document.getElementById('requests-list')
+    const tabs = document.querySelectorAll('.tab')
+    let currentTab = 'sent'
+    let profile = null
+
+    async function load(tab) {
+      currentTab = tab
+      listEl.innerHTML = '<p style="text-align:center;padding:40px">Đang tải...</p>'
+      try {
+        profile = profile || await getProfile()
+        const requests = tab === 'sent' ? await fetchSentRequests(profile.id) : await fetchReceivedRequests(profile.id)
+        if (!requests.length) {
+          listEl.innerHTML = `<div class="empty-state"><div class="empty-state__icon">📋</div><p class="empty-state__title">Chưa có yêu cầu</p></div>`
+          return
+        }
+        listEl.innerHTML = `<div class="request-list">${requests.map((r) => renderRequestCard(r, tab === 'sent' ? 'sent' : 'received')).join('')}</div>`
+        bindActions()
+      } catch (err) {
+        listEl.innerHTML = `<p style="color:var(--color-danger);text-align:center">${err.message}</p>`
+      }
+    }
+
+    function bindActions() {
+      listEl.querySelectorAll('[data-accept]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          btn.disabled = true
+          try { await updateRequestStatus(btn.dataset.accept, 'accepted'); showToast('Đã chấp nhận', 'success'); load(currentTab) }
+          catch (e) { showToast(e.message, 'error'); btn.disabled = false }
+        })
+      })
+      listEl.querySelectorAll('[data-reject-req]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          btn.disabled = true
+          try { await updateRequestStatus(btn.dataset.rejectReq, 'rejected'); showToast('Đã từ chối', 'success'); load(currentTab) }
+          catch (e) { showToast(e.message, 'error'); btn.disabled = false }
+        })
+      })
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((t) => t.classList.remove('tab--active'))
+        tab.classList.add('tab--active')
+        load(tab.dataset.tab)
+      })
+    })
+    await load('sent')
+  </script>
+</body>
+</html>

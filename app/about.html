@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Giới thiệu — ĐN-UniShare</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/app.css">
+  <style>
+    .mission-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-4); margin-top: var(--space-8); }
+    .mission-card {
+      padding: var(--space-6); border-radius: var(--radius-lg);
+      background: var(--dn-surface-elevated); border: 1px solid var(--dn-border); text-align: center;
+    }
+    .mission-card__emoji { font-size: 2.5rem; margin-bottom: var(--space-3); }
+    .about-story {
+      padding: var(--space-8); border-radius: var(--radius-xl);
+      background: var(--dn-surface-elevated); border: 1px solid var(--dn-border);
+      margin-bottom: var(--space-8); line-height: 1.8; color: var(--color-text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <header id="site-header"></header>
+  <main class="page-wrap container" style="max-width:800px">
+    <div class="page-hero">
+      <p style="font-size:0.8125rem;font-weight:600;color:var(--dn-accent);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:var(--space-2)">Câu chuyện của chúng mình</p>
+      <h1>Về <span class="gradient-text">ĐN-UniShare</span></h1>
+    </div>
+
+    <div class="about-story">
+      <p style="margin-bottom:var(--space-4)">
+        <strong style="color:var(--color-text)">Làm thế nào để những món đồ sinh viên không dùng nữa có thể đến tay những người thực sự cần?</strong>
+      </p>
+      <p style="margin-bottom:var(--space-4)">
+        Mỗi năm, hàng tấn sách vở, giáo trình và đồ dùng ký túc xá bị vứt bỏ khi sinh viên tốt nghiệp hoặc chuyển trọ. Trong khi đó, hàng ngàn tân sinh viên lại phải chật vật chi trả cho những vật dụng tương tự.
+      </p>
+      <p>
+        Nhận thấy sự lãng phí này, chúng tôi xây dựng <strong style="color:var(--color-text)">ĐN-UniShare</strong> — nền tảng kết nối sẻ chia dành riêng cho cộng đồng sinh viên tại Làng Đại học Đà Nẵng.
+      </p>
+    </div>
+
+    <h2 style="font-size:1.25rem;font-weight:700;text-align:center;margin-bottom:var(--space-2)">Sứ mệnh của chúng tôi</h2>
+    <p style="text-align:center;color:var(--color-text-secondary);font-size:0.9375rem;margin-bottom:var(--space-4)">Ba trụ cột xây dựng cộng đồng sinh viên bền vững</p>
+
+    <div class="mission-grid">
+      <div class="mission-card">
+        <div class="mission-card__emoji">🌱</div>
+        <h3 style="font-weight:700;margin-bottom:var(--space-2)">Lối sống xanh</h3>
+        <p style="font-size:0.875rem;color:var(--color-text-secondary)">Thúc đẩy thói quen tái sử dụng đồ dùng, kiến tạo cộng đồng học đường thân thiện với môi trường.</p>
+      </div>
+      <div class="mission-card">
+        <div class="mission-card__emoji">💰</div>
+        <h3 style="font-weight:700;margin-bottom:var(--space-2)">Hỗ trợ tài chính</h3>
+        <p style="font-size:0.875rem;color:var(--color-text-secondary)">Giúp sinh viên tiết kiệm chi phí mua sách, đồ học tập và KTX.</p>
+      </div>
+      <div class="mission-card">
+        <div class="mission-card__emoji">🤝</div>
+        <h3 style="font-weight:700;margin-bottom:var(--space-2)">Xây dựng cộng đồng</h3>
+        <p style="font-size:0.875rem;color:var(--color-text-secondary)">Môi trường tử tế, sẵn sàng giúp đỡ lẫn nhau trong Làng Đại học.</p>
+      </div>
+    </div>
+  </main>
+  <nav id="bottom-nav"></nav>
+  <script type="module">
+    import { requireAuth } from '../js/auth.js'
+    import { initSiteLayout } from '../js/layout.js'
+
+    await requireAuth()
+    await initSiteLayout('about')
+  </script>
+</body>
+</html>

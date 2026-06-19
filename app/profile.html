@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cá nhân — ĐN-UniShare</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/app.css">
+  <style>
+    .profile-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-8); }
+    .profile-stat { padding: var(--space-5); background: var(--dn-surface-elevated); border: 1px solid var(--dn-border); border-radius: var(--radius-lg); text-align: center; }
+    .profile-stat__value { font-size: 2rem; font-weight: 800; color: var(--dn-accent); }
+    .profile-stat__label { font-size: 0.8125rem; color: var(--color-text-secondary); margin-top: var(--space-1); }
+    .profile-item {
+      display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3);
+      border-radius: var(--radius-md); border: 1px solid var(--dn-border); margin-bottom: var(--space-3);
+      background: var(--dn-surface-elevated);
+    }
+    .profile-item img { width: 56px; height: 56px; object-fit: cover; border-radius: var(--radius-md); flex-shrink: 0; }
+    .profile-item__info { flex: 1; min-width: 0; }
+    .profile-item__title { font-weight: 700; font-size: 0.9375rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .profile-item__actions { display: flex; gap: var(--space-2); flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <header id="site-header"></header>
+  <main class="page-wrap container">
+    <div id="profile-content">Đang tải...</div>
+  </main>
+  <nav id="bottom-nav"></nav>
+  <script type="module">
+    import { requireAuth, getProfile } from '../js/auth.js'
+    import { initSiteLayout } from '../js/layout.js'
+    import { fetchMyItems, deleteItem } from '../js/items.js'
+    import { fetchSentRequests, fetchReceivedRequests } from '../js/requests.js'
+    import { STATUS_LABELS } from '../js/constants.js'
+    import { getInitials, showToast, formatDate } from '../js/ui.js'
+
+    await requireAuth()
+    await initSiteLayout('profile')
+
+    const content = document.getElementById('profile-content')
+
+    try {
+      const profile = await getProfile()
+      if (!profile) throw new Error('Không tải được hồ sơ')
+
+      const [myItems, sentReqs, receivedReqs] = await Promise.all([
+        fetchMyItems(profile.id),
+        fetchSentRequests(profile.id),
+        fetchReceivedRequests(profile.id),
+      ])
+
+      const avatarHtml = profile.avatar
+        ? `<img src="${profile.avatar}" alt="">`
+        : getInitials(profile.name)
+
+      const itemsHtml = myItems.length
+        ? myItems.map((item) => {
+            const img = item.image || 'https://placehold.co/80x80/1a1a1d/5c5c62?text=?'
+            return `
+              <div class="profile-item" data-item-id="${item.id}">
+                <img src="${img}" alt="">
+                <div class="profile-item__info">
+                  <p class="profile-item__title">${item.title}</p>
+                  <p class="card__meta">
+                    <span class="badge badge--${item.status === 'available' ? 'success' : item.status === 'pending' ? 'warning' : 'neutral'}">${STATUS_LABELS[item.status] || item.status}</span>
+                    · ${item.requested_count || 0} yêu cầu · ${formatDate(item.created_at)}
+                  </p>
+                </div>
+                <div class="profile-item__actions">
+                  <a href="edit.html?id=${item.id}" class="btn btn--ghost btn--sm">✏️ Sửa</a>
+                  <button type="button" class="btn btn--danger btn--sm" data-delete="${item.id}" data-title="${item.title.replace(/"/g, '&quot;')}">🗑️ Xóa</button>
+                </div>
+              </div>
+            `
+          }).join('')
+        : `
+          <div class="empty-state" style="padding:var(--space-8)">
+            <div class="empty-state__icon">📦</div>
+            <p class="empty-state__title">Bạn chưa đăng món đồ nào</p>
+            <a href="post/index.html" class="btn btn--primary" style="margin-top:var(--space-4)">Đăng ngay</a>
+          </div>
+        `
+
+      content.innerHTML = `
+        <div class="profile-header">
+          <div class="profile-header__avatar">${avatarHtml}</div>
+          <div>
+            <h1 style="font-size:1.75rem;font-weight:800;margin-bottom:var(--space-2)">${profile.name}</h1>
+            <p class="card__meta">✉️ ${profile.email}</p>
+            <p class="card__meta" style="margin-top:4px">🏫 ${profile.faculty || 'Khác'}</p>
+          </div>
+          <a href="post/index.html" class="btn btn--primary btn--sm" style="margin-left:auto;align-self:flex-start">➕ Đăng tin</a>
+        </div>
+
+        <div class="profile-stats">
+          <div class="profile-stat">
+            <div class="profile-stat__value">${myItems.length}</div>
+            <div class="profile-stat__label">Tin đã đăng</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat__value">${sentReqs.length + receivedReqs.length}</div>
+            <div class="profile-stat__label">Yêu cầu</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat__value">${sentReqs.filter((r) => r.status === 'accepted' || r.status === 'collected').length}</div>
+            <div class="profile-stat__label">Đã trao đổi</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat__value">${receivedReqs.filter((r) => r.status === 'pending').length}</div>
+            <div class="profile-stat__label">Chờ duyệt</div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4)">
+          <h2 style="font-size:1.125rem;font-weight:700">📋 Tin đăng của tôi</h2>
+          <a href="requests.html" class="btn btn--ghost btn--sm">Xem yêu cầu →</a>
+        </div>
+        <div id="my-items-list">${itemsHtml}</div>
+      `
+
+      content.querySelectorAll('[data-delete]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.delete
+          const title = btn.dataset.title
+          if (!confirm(`Bạn có chắc muốn xóa "${title}"?`)) return
+          btn.disabled = true
+          try {
+            await deleteItem(id)
+            showToast('Đã xóa tin đăng', 'success')
+            btn.closest('.profile-item')?.remove()
+          } catch (err) {
+            showToast(err.message, 'error')
+            btn.disabled = false
+          }
+        })
+      })
+    } catch (err) {
+      content.innerHTML = `<p style="color:var(--color-danger);text-align:center">${err.message}</p>`
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chi tiết — ĐN-UniShare</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+  <header id="site-header"></header>
+  <main class="page-wrap container">
+    <a href="items.html" class="btn btn--ghost btn--sm" style="margin-bottom:16px">← Quay lại</a>
+    <div id="detail-content">Đang tải...</div>
+  </main>
+  <nav id="bottom-nav"></nav>
+  <script type="module">
+    import { requireAuth, getProfile } from '../js/auth.js'
+    import { initSiteLayout } from '../js/layout.js'
+    import { fetchItemById, deleteItem, getItemCoords } from '../js/items.js'
+    import { sendRequest, getExistingRequest } from '../js/requests.js'
+    import { toggleFavorite, fetchFavoriteIds, getFavoriteIds } from '../js/favorites.js'
+    import { getOrCreateConversation } from '../js/chat.js'
+    import { showPaymentModal } from '../js/payment.js'
+    import { CATEGORY_MAP, CONDITION_LABELS, EXCHANGE_LABELS, parseExchangeWant, parseLostPlace, stripPostMeta } from '../js/constants.js'
+    import { initStaticMap, renderMapPlaceholder } from '../js/vietmap.js'
+    import { showToast, formatDate } from '../js/ui.js'
+
+    const REQUEST_LABELS = {
+      mienphi: '🎁 Nhận miễn phí',
+      traodoi: '🔄 Đề xuất trao đổi',
+      sale: '📩 Gửi yêu cầu mua',
+      lost: '👀 Báo đã thấy đồ',
+    }
+
+    await requireAuth()
+    await initSiteLayout('items')
+    await fetchFavoriteIds()
+
+    const itemId = new URLSearchParams(location.search).get('id')
+    const content = document.getElementById('detail-content')
+
+    if (!itemId) {
+      content.innerHTML = '<p>Không tìm thấy món đồ.</p>'
+    } else {
+      try {
+        const [item, profile] = await Promise.all([fetchItemById(itemId), getProfile()])
+
+        if (!['available', 'reserved'].includes(item.status) && item.poster_id !== profile.id && profile.role !== 'admin') {
+          content.innerHTML = `<div class="empty-state"><div class="empty-state__icon">🔒</div><p class="empty-state__title">Tin chưa được duyệt</p><a href="items.html" class="btn btn--primary" style="margin-top:16px">Quay lại</a></div>`
+        } else {
+          const cat = CATEGORY_MAP[item.category] || { label: item.category, emoji: '📦' }
+          const isOwner = item.poster_id === profile.id
+          const existingReq = !isOwner ? await getExistingRequest(itemId, profile.id) : null
+          const isFav = getFavoriteIds().includes(item.id)
+          const img = item.image || 'https://placehold.co/600x400/1a1a1d/5c5c62?text=No+Image'
+          const isLost = item.exchange_type === 'lost'
+          const exchangeWant = parseExchangeWant(item.description)
+          const lostPlace = parseLostPlace(item.description)
+          const displayDesc = stripPostMeta(item.description)
+          const reqLabel = REQUEST_LABELS[item.exchange_type] || 'Gửi yêu cầu'
+
+          let actions = ''
+          if (isOwner) {
+            actions = `
+              <a href="edit.html?id=${item.id}" class="btn btn--secondary">✏️ Sửa tin</a>
+              <button class="btn btn--danger" id="btn-delete">🗑️ Xóa</button>`
+          } else if (existingReq) {
+            actions = `<span class="badge badge--warning">Đã gửi yêu cầu (${existingReq.status})</span>`
+          } else if (item.status === 'available') {
+            actions = `<button class="btn btn--primary" id="btn-request">${reqLabel}</button>`
+            if (item.exchange_type === 'sale' && item.price) {
+              actions += `<button class="btn btn--secondary" id="btn-pay">💳 Mua ngay ${Number(item.price).toLocaleString('vi-VN')}đ</button>`
+            }
+          }
+          actions += `
+            <button class="btn btn--secondary" id="btn-chat">💬 Nhắn tin</button>
+            <button class="btn btn--ghost" id="btn-fav">${isFav ? '❤️ Đã lưu' : '🤍 Lưu'}</button>
+            <button class="btn btn--ghost" id="btn-share">🔗 Chia sẻ</button>`
+
+          content.innerHTML = `
+            <div class="detail-grid">
+              <img class="detail-image" src="${img}" alt="${item.title}">
+              <div class="detail-info">
+                <h1>${item.title}</h1>
+                <div class="detail-meta" style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0">
+                  <span class="badge badge--primary">${cat.emoji} ${cat.label}</span>
+                  <span class="badge badge--accent">${EXCHANGE_LABELS[item.exchange_type] || item.exchange_type}</span>
+                  ${!isLost ? `<span class="badge badge--neutral">${CONDITION_LABELS[item.condition]}</span>` : ''}
+                  ${item.price ? `<span class="badge badge--warning">${Number(item.price).toLocaleString('vi-VN')}đ</span>` : ''}
+                </div>
+                <p class="detail-desc" style="color:var(--color-text-secondary);line-height:1.7;margin-bottom:16px">${displayDesc}</p>
+                ${exchangeWant ? `<p class="card__meta" style="padding:12px;background:var(--dn-accent-soft);border-radius:8px;margin-bottom:16px">🔄 <strong>Muốn đổi lấy:</strong> ${exchangeWant}</p>` : ''}
+                ${lostPlace ? `<p class="card__meta" style="padding:12px;background:rgba(239,68,68,0.08);border-radius:8px;margin-bottom:16px">📍 <strong>Nơi có thể mất:</strong> ${lostPlace}</p>` : ''}
+                ${item.lost_date ? `<p class="card__meta" style="margin-bottom:8px">📅 Ngày mất: ${item.lost_date}</p>` : ''}
+                ${item.reward ? `<p class="card__meta" style="margin-bottom:8px">🎁 Thưởng: ${item.reward}</p>` : ''}
+                <p class="card__meta">📍 Điểm hẹn: ${item.location}</p>
+                <div id="detail-map" class="map-canvas map-canvas--detail"></div>
+                <p class="card__meta" style="margin-top:8px">🕐 Đăng lúc ${formatDate(item.created_at)}</p>
+                ${isLost && item.contact_phone ? `<p class="card__meta" style="margin-top:8px">📞 Liên hệ: ${item.contact_phone}</p>` : ''}
+                <div class="detail-poster" style="display:flex;gap:12px;align-items:center;padding:16px;background:var(--dn-surface-raised);border-radius:12px;margin:20px 0">
+                  <div class="site-nav__avatar" style="width:44px;height:44px">${item.posted_by?.[0]}</div>
+                  <div><div style="font-weight:600">${item.posted_by}</div><div class="card__meta">${item.poster_faculty}</div></div>
+                </div>
+                <div class="detail-actions">${actions}</div>
+              </div>
+            </div>`
+
+          document.getElementById('btn-request')?.addEventListener('click', async () => {
+            try {
+              await sendRequest(item, profile)
+              showToast('Đã gửi yêu cầu!', 'success')
+              location.reload()
+            } catch (e) { showToast(e.message, 'error') }
+          })
+
+          document.getElementById('btn-pay')?.addEventListener('click', () => {
+            showPaymentModal(item, () => showToast('Thanh toán thành công (demo)', 'success'))
+          })
+
+          document.getElementById('btn-chat')?.addEventListener('click', async () => {
+            if (isOwner) return showToast('Không thể nhắn tin với chính mình', 'error')
+            try {
+              const conv = await getOrCreateConversation(profile, item.poster_id, item.posted_by, item.id, item.title)
+              location.href = `chat-room.html?id=${conv.id}`
+            } catch (e) { showToast(e.message, 'error') }
+          })
+
+          document.getElementById('btn-fav')?.addEventListener('click', async () => {
+            try {
+              const on = await toggleFavorite(item.id)
+              showToast(on ? 'Đã thêm yêu thích' : 'Đã bỏ yêu thích', 'success')
+              document.getElementById('btn-fav').textContent = on ? '❤️ Đã lưu' : '🤍 Lưu'
+            } catch (e) { showToast(e.message, 'error') }
+          })
+
+          document.getElementById('btn-share')?.addEventListener('click', async () => {
+            const url = location.href
+            if (navigator.share) await navigator.share({ title: item.title, url })
+            else { await navigator.clipboard.writeText(url); showToast('Đã copy link', 'success') }
+          })
+
+          const coords = getItemCoords(item, 0)
+          initStaticMap('detail-map', coords.lat, coords.lng).catch(() => {
+            renderMapPlaceholder('detail-map', 'Không tải được bản đồ')
+          })
+
+          document.getElementById('btn-delete')?.addEventListener('click', async () => {
+            if (!confirm('Xóa tin này?')) return
+            try {
+              await deleteItem(item.id)
+              showToast('Đã xóa', 'success')
+              location.href = 'profile.html'
+            } catch (e) { showToast(e.message, 'error') }
+          })
+        }
+      } catch (err) {
+        content.innerHTML = `<p style="color:var(--color-danger)">${err.message}</p>`
+      }
+    }
+  </script>
+</body>
+</html>

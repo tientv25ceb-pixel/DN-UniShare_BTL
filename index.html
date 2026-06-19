@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ĐN-UniShare — Chia sẻ đồ dùng sinh viên</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/cinematic.css">
+</head>
+<body class="home-cinematic">
+  <header id="site-header"></header>
+
+  <div id="cinematic-page" class="cinematic-page">
+    <div class="cinematic-fixed">
+      <canvas id="hero-canvas"></canvas>
+      <div id="fire-overlay" class="fire-overlay" aria-hidden="true">
+        <div class="fire-overlay__glow"></div>
+        <div class="fire-overlay__column"></div>
+      </div>
+      <div class="cinematic-vignette"></div>
+      <div class="cinematic-loader" id="cinematic-loader">
+        <div class="cinematic-loader__spin"></div>
+        <span class="cinematic-loader__text" id="cinematic-loader-text">Đang tải hiệu ứng: 0%</span>
+      </div>
+    </div>
+
+    <div class="cinematic-progress"><div id="scroll-progress-bar"></div></div>
+
+    <div class="cinematic-content">
+      <section class="scroll-hero">
+        <div class="container" style="max-width:900px">
+          <div class="dn-label gsap-reveal" style="margin:0 auto 24px">✨ Cộng đồng sinh viên Đà Nẵng</div>
+          <h1 class="dn-heading dn-heading--hero gsap-reveal" style="margin-bottom:24px">
+            Chia sẻ đồ dùng.<br><span class="gradient-text">Kết nối tử tế.</span>
+          </h1>
+          <p class="dn-body gsap-reveal" style="font-size:1.125rem;max-width:640px;margin:0 auto 32px">
+            Nền tảng kết nối sinh viên Làng Đại học Đà Nẵng — trao đi những món đồ còn tốt,
+            nhận lại những gì bạn cần. Một hành động nhỏ, một tác động lớn.
+          </p>
+          <div class="gsap-reveal" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+            <a href="auth/login.html" class="btn btn--primary btn--lg">Bắt đầu chia sẻ</a>
+            <a href="app/items.html" class="btn btn--secondary btn--lg" style="background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.2);color:#fff">Khám phá đồ miễn phí</a>
+          </div>
+          <div class="gsap-reveal" style="display:flex;flex-wrap:wrap;justify-content:center;gap:24px;margin-top:40px;font-size:0.875rem;color:rgba(255,255,255,0.5)">
+            <span><strong style="color:var(--dn-accent)">500+</strong> Món đồ chia sẻ</span>
+            <span><strong style="color:var(--dn-accent)">1.2k+</strong> Sinh viên</span>
+            <span><strong style="color:var(--dn-accent)">95%</strong> Hài lòng</span>
+          </div>
+        </div>
+        <div class="scroll-hero__scroll-hint">Cuộn xuống để khám phá ↓</div>
+      </section>
+
+      <section class="dn-section">
+        <div class="container dn-cinematic-panel">
+          <div class="gsap-reveal" style="text-align:center;margin-bottom:40px">
+            <div class="dn-label" style="margin:0 auto 16px">Nền tảng</div>
+            <h2 class="dn-heading dn-heading--section" style="color:#fff">Tại sao chọn <span class="gradient-text">ĐN-UniShare?</span></h2>
+            <p class="dn-body" style="max-width:560px;margin:16px auto 0">Hàng ngàn sinh viên Đà Nẵng cùng xây dựng cộng đồng tử tế — đồ cũ tìm chủ mới, tình bạn được thắp lên.</p>
+          </div>
+          <div class="why-grid">
+            <div class="why-card why-card--wide gsap-reveal">
+              <div style="font-size:1.75rem;margin-bottom:12px">🌱</div>
+              <h3 style="font-weight:700;color:#fff;margin-bottom:8px">Giảm lãng phí</h3>
+              <p class="dn-body" style="font-size:0.875rem">Tái sử dụng đồ còn tốt thay vì vứt bỏ. Mỗi món trao đi là một bước tiến cho môi trường.</p>
+            </div>
+            <div class="why-card gsap-reveal">
+              <div style="font-size:1.75rem;margin-bottom:12px">🤝</div>
+              <h3 style="font-weight:700;color:#fff;margin-bottom:8px">Kết nối</h3>
+              <p class="dn-body" style="font-size:0.875rem">Gặp gỡ và trao đổi trong Làng Đại học.</p>
+            </div>
+            <div class="why-card gsap-reveal">
+              <div style="font-size:1.75rem;margin-bottom:12px">📚</div>
+              <h3 style="font-weight:700;color:#fff;margin-bottom:8px">Sách & tài liệu</h3>
+              <p class="dn-body" style="font-size:0.875rem">Giảm gánh nặng chi phí đầu năm.</p>
+            </div>
+            <div class="why-card gsap-reveal">
+              <div style="font-size:1.75rem;margin-bottom:12px">💚</div>
+              <h3 style="font-weight:700;color:#fff;margin-bottom:8px">Lan tỏa tử tế</h3>
+              <p class="dn-body" style="font-size:0.875rem">Một hành động nhỏ, tác động lớn.</p>
+            </div>
+            <div class="why-card gsap-reveal">
+              <div style="font-size:1.75rem;margin-bottom:12px">🏠</div>
+              <h3 style="font-weight:700;color:#fff;margin-bottom:8px">Đồ KTX</h3>
+              <p class="dn-body" style="font-size:0.875rem">Bàn ghế, đèn học, quần áo — tìm miễn phí.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="dn-section">
+        <div class="container dn-cinematic-panel">
+          <div class="gsap-reveal">
+            <div class="dn-label" style="margin-bottom:16px">Cách hoạt động</div>
+            <h2 class="dn-heading dn-heading--section" style="color:#fff;margin-bottom:12px">Bốn bước <span class="gradient-text">đơn giản</span></h2>
+            <p class="dn-body" style="margin-bottom:32px">Đăng đồ, tìm đồ, gửi yêu cầu — mọi thứ miễn phí.</p>
+          </div>
+          <div class="steps-timeline">
+            <div class="step-row gsap-reveal"><div><div class="step-row__icon">🎁</div><div class="step-row__line"></div></div><div><h3 style="font-weight:700;color:#fff;font-size:0.9375rem">Đăng món đồ</h3><p class="dn-body" style="font-size:0.875rem">Tặng, trao đổi, bán hoặc tìm đồ — admin duyệt trước khi hiển thị.</p></div></div>
+            <div class="step-row gsap-reveal"><div><div class="step-row__icon">🔍</div><div class="step-row__line"></div></div><div><h3 style="font-weight:700;color:#fff;font-size:0.9375rem">Tìm đồ cần thiết</h3><p class="dn-body" style="font-size:0.875rem">Khám phá danh sách hoặc tìm quanh đây theo điểm hẹn người đăng.</p></div></div>
+            <div class="step-row gsap-reveal"><div><div class="step-row__icon">💬</div><div class="step-row__line"></div></div><div><h3 style="font-weight:700;color:#fff;font-size:0.9375rem">Gửi yêu cầu & chat</h3><p class="dn-body" style="font-size:0.875rem">Nhắn tin trực tiếp và chốt lịch nhận đồ.</p></div></div>
+            <div class="step-row gsap-reveal"><div><div class="step-row__icon">❤️</div></div><div><h3 style="font-weight:700;color:#fff;font-size:0.9375rem">Nhận & cảm ơn</h3><p class="dn-body" style="font-size:0.875rem">Hẹn gặp tại điểm an toàn người đăng đã ghim.</p></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="dn-section">
+        <div class="container">
+          <div class="gsap-reveal" style="text-align:center;margin-bottom:32px">
+            <div class="dn-label" style="margin:0 auto 16px">Chức năng chính</div>
+            <h2 class="dn-heading dn-heading--section" style="color:#fff">Tặng · Trao đổi · Bán · Tìm đồ</h2>
+          </div>
+          <div class="feature-pills">
+            <a href="app/post/give/index.html" class="feature-pill gsap-reveal" style="text-decoration:none;color:inherit">
+              <div class="feature-pill__emoji">🎁</div>
+              <h3>Tặng đồ</h3>
+              <p>Cho đi miễn phí</p>
+            </a>
+            <a href="app/post/exchange/index.html" class="feature-pill gsap-reveal" style="text-decoration:none;color:inherit">
+              <div class="feature-pill__emoji">🔄</div>
+              <h3>Trao đổi</h3>
+              <p>Đổi đồ cùng SV</p>
+            </a>
+            <a href="app/post/sell/index.html" class="feature-pill gsap-reveal" style="text-decoration:none;color:inherit">
+              <div class="feature-pill__emoji">💰</div>
+              <h3>Bán đồ</h3>
+              <p>Thanh lý giá SV</p>
+            </a>
+            <a href="app/post/lost/index.html" class="feature-pill gsap-reveal" style="text-decoration:none;color:inherit">
+              <div class="feature-pill__emoji">🔍</div>
+              <h3>Tìm đồ</h3>
+              <p>Báo mất đồ</p>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="dn-section" id="featured-section" style="display:none">
+        <div class="container dn-cinematic-panel">
+          <div class="gsap-reveal" style="margin-bottom:24px">
+            <div class="dn-label" style="margin-bottom:16px">Nổi bật</div>
+            <h2 class="dn-heading dn-heading--section" style="color:#fff">Đang được <span class="gradient-text">quan tâm</span></h2>
+          </div>
+          <div id="featured" class="item-grid"></div>
+          <div style="text-align:center;margin-top:24px">
+            <a href="app/items.html" class="btn btn--secondary" style="color:#fff;border-color:rgba(255,255,255,0.25)">Xem tất cả →</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="dn-section">
+        <div class="container dn-cinematic-panel" style="text-align:center">
+          <div class="gsap-reveal">
+            <div class="dn-label" style="margin:0 auto 16px">Tác động</div>
+            <h2 class="dn-heading dn-heading--section" style="color:#fff;margin-bottom:12px">Tử tệ — <span class="gradient-text">vòng tròn lớn dần</span></h2>
+            <p class="dn-body" style="max-width:560px;margin:0 auto 32px">Mỗi món đồ trao đi truyền cảm hứng để người khác tiếp tục cho đi.</p>
+          </div>
+          <div class="impact-stats gsap-reveal">
+            <div><p class="impact-stats__value">500+</p><p class="dn-body" style="font-size:0.875rem;margin-top:4px">Món đã trao</p></div>
+            <div><p class="impact-stats__value">1.2k+</p><p class="dn-body" style="font-size:0.875rem;margin-top:4px">Thành viên</p></div>
+            <div><p class="impact-stats__value">98%</p><p class="dn-body" style="font-size:0.875rem;margin-top:4px">Phản hồi tích cực</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="dn-section">
+        <div class="container" style="text-align:center">
+          <div class="dn-cinematic-panel gsap-reveal" style="padding:48px 32px">
+            <h2 class="dn-heading dn-heading--section" style="color:#fff;margin-bottom:12px">Sẵn sàng chia sẻ?</h2>
+            <p class="dn-body" style="margin-bottom:24px">Đăng nhập Google để đăng tin, chat và nhận đồ từ cộng đồng.</p>
+            <a href="auth/login.html" class="btn btn--primary btn--lg">Đăng nhập ngay</a>
+          </div>
+        </div>
+      </section>
+
+      <footer class="home-footer">
+        <p>© 2026 ĐN-UniShare · Đồ án môn Công nghệ Web</p>
+        <p style="margin-top:8px"><a href="app/about.html">Giới thiệu</a> · <a href="auth/login.html">Đăng nhập</a></p>
+      </footer>
+    </div>
+  </div>
+
+  <nav id="bottom-nav"></nav>
+
+  <script type="module">
+    import { initSiteLayout } from './js/layout.js'
+    import { getSession } from './js/auth.js'
+    import { supabase } from './js/supabase.js'
+    import { renderItemCard } from './js/items.js'
+    import { initHomeCinematic } from './js/home-cinematic.js'
+
+    await initSiteLayout('home')
+    initHomeCinematic()
+
+    const session = await getSession()
+    if (session) {
+      const { data: featured } = await supabase.from('items').select('*').eq('status', 'available').neq('exchange_type', 'found').eq('is_featured', true).limit(4)
+      let items = featured
+      if (!items || !items.length) {
+        const { data } = await supabase.from('items').select('*').eq('status', 'available').neq('exchange_type', 'found').limit(4)
+        items = data
+      }
+      if (items && items.length) {
+        document.getElementById('featured-section').style.display = ''
+        document.getElementById('featured').innerHTML = items.map((i) => renderItemCard(i)).join('')
+      }
+    }
+  </script>
+</body>
+</html>

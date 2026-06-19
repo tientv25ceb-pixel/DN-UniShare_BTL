@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khám phá — ĐN-UniShare</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+  <header id="site-header"></header>
+  <main class="page-wrap container">
+    <div class="page-hero">
+      <h1>Khám phá món đồ</h1>
+      <p>Hàng trăm vật phẩm từ sinh viên Làng Đại học Đà Nẵng.</p>
+    </div>
+    <div class="filter-chips" id="quick-filters" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:var(--space-4)">
+      <button type="button" class="btn btn--sm btn--secondary" data-exchange="">Tất cả</button>
+      <button type="button" class="btn btn--sm btn--ghost" data-exchange="mienphi">🎁 Tặng</button>
+      <button type="button" class="btn btn--sm btn--ghost" data-exchange="traodoi">🔄 Trao đổi</button>
+      <button type="button" class="btn btn--sm btn--ghost" data-exchange="sale">💰 Bán</button>
+      <button type="button" class="btn btn--sm btn--ghost" data-exchange="lost">🔍 Tìm đồ</button>
+      <a href="nearby.html" class="btn btn--sm btn--ghost" style="margin-left:auto">📍 Quanh đây</a>
+    </div>
+    <div class="filters-bar">
+      <div class="filters-bar__search">
+        <span class="filters-bar__search-icon">🔍</span>
+        <input type="search" id="search" placeholder="Tìm theo tên, mô tả...">
+      </div>
+      <select id="filter-category"><option value="">Tất cả danh mục</option></select>
+      <select id="filter-condition"><option value="">Tình trạng</option></select>
+      <select id="filter-exchange"><option value="">Hình thức</option></select>
+      <label style="display:flex;align-items:center;gap:6px;font-size:0.875rem;cursor:pointer">
+        <input type="checkbox" id="fav-only"> ❤️ Yêu thích
+      </label>
+    </div>
+    <div class="item-grid" id="items-grid"></div>
+  </main>
+  <nav id="bottom-nav"></nav>
+  <script type="module">
+    import { requireAuth } from '../js/auth.js'
+    import { initSiteLayout } from '../js/layout.js'
+    import { fetchAvailableItems, renderItemCard } from '../js/items.js'
+    import { fetchFavoriteIds, getFavoriteIds } from '../js/favorites.js'
+    import { CATEGORY_LABELS, CONDITION_LABELS, EXCHANGE_LABELS } from '../js/constants.js'
+    import { renderSkeletonCards } from '../js/ui.js'
+
+    await requireAuth()
+    await initSiteLayout('items')
+    await fetchFavoriteIds()
+
+    const grid = document.getElementById('items-grid')
+    let allItems = []
+
+    function fillSelect(id, labels) {
+      const sel = document.getElementById(id)
+      Object.entries(labels).forEach(([val, label]) => {
+        const opt = document.createElement('option')
+        opt.value = val; opt.textContent = label; sel.appendChild(opt)
+      })
+    }
+    fillSelect('filter-category', CATEGORY_LABELS)
+    fillSelect('filter-condition', CONDITION_LABELS)
+    fillSelect('filter-exchange', EXCHANGE_LABELS)
+
+    function render() {
+      const search = document.getElementById('search').value.toLowerCase()
+      const favOnly = document.getElementById('fav-only').checked
+      const favs = getFavoriteIds()
+      const filtered = allItems.filter((item) => {
+        const matchSearch = !search || item.title.toLowerCase().includes(search) || item.description.toLowerCase().includes(search)
+        const matchCat = !document.getElementById('filter-category').value || item.category === document.getElementById('filter-category').value
+        const matchCond = !document.getElementById('filter-condition').value || item.condition === document.getElementById('filter-condition').value
+        const matchExch = !document.getElementById('filter-exchange').value || item.exchange_type === document.getElementById('filter-exchange').value
+        const matchFav = !favOnly || favs.includes(item.id)
+        return matchSearch && matchCat && matchCond && matchExch && matchFav
+      })
+      grid.innerHTML = filtered.length
+        ? filtered.map((i) => renderItemCard(i, { favorited: favs.includes(i.id) })).join('')
+        : `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state__icon">📭</div><p class="empty-state__title">Không tìm thấy món đồ</p></div>`
+    }
+
+    grid.innerHTML = renderSkeletonCards(6)
+    try {
+      allItems = await fetchAvailableItems()
+      render()
+    } catch (err) {
+      grid.innerHTML = `<p style="color:var(--color-danger);grid-column:1/-1;text-align:center">${err.message}</p>`
+    }
+
+    ;['search','filter-category','filter-condition','filter-exchange','fav-only'].forEach((id) => {
+      document.getElementById(id).addEventListener(id === 'search' ? 'input' : 'change', render)
+    })
+
+    document.querySelectorAll('#quick-filters [data-exchange]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.getElementById('filter-exchange').value = btn.dataset.exchange
+        document.querySelectorAll('#quick-filters [data-exchange]').forEach((b) => {
+          b.className = `btn btn--sm ${b === btn ? 'btn--secondary' : 'btn--ghost'}`
+        })
+        render()
+      })
+    })
+
+    const params = new URLSearchParams(location.search)
+    if (params.get('type')) {
+      document.getElementById('filter-exchange').value = params.get('type')
+      const chip = document.querySelector(`#quick-filters [data-exchange="${params.get('type')}"]`)
+      chip?.click()
+    }
+  </script>
+</body>
+</html>

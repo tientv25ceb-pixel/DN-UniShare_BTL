@@ -1,0 +1,10 @@
+{
+  "name": "dn-unishare-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ĐN-UniShare — HTML/CSS/JS + Supabase",
+  "scripts": {
+    "start": "serve . -l 3000 --config serve.json",
+    "dev": "serve . -l 3000 --config serve.json"
+  }
+}

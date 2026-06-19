@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chỉnh sửa — ĐN-UniShare</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/app.css">
+  <style>
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+    @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
+    .post-form { max-width: 640px; }
+    .image-preview { display: none; max-width: 240px; margin-top: var(--space-3); border-radius: var(--radius-md); }
+    .image-preview.visible { display: block; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header id="site-header"></header>
+  <main class="page-wrap container">
+    <div id="edit-content">Đang tải...</div>
+  </main>
+  <nav id="bottom-nav"></nav>
+  <script type="module">
+    import { requireAuth, getProfile } from '../js/auth.js'
+    import { initSiteLayout } from '../js/layout.js'
+    import { fetchItemById, updateItem, uploadImage } from '../js/items.js'
+    import { CATEGORY_LABELS, CONDITION_LABELS } from '../js/constants.js'
+    import { initLocationPicker } from '../js/post-form.js'
+    import { parseExchangeWant, parseLostPlace, stripPostMeta } from '../js/constants.js'
+    import { showToast } from '../js/ui.js'
+
+    await requireAuth()
+    await initSiteLayout('post')
+
+    const params = new URLSearchParams(window.location.search)
+    const itemId = params.get('id')
+    const content = document.getElementById('edit-content')
+
+    if (!itemId) {
+      content.innerHTML = `
+        <div class="empty-state">
+          <p class="empty-state__title">Không tìm thấy món đồ</p>
+          <a href="profile.html" class="btn btn--primary" style="margin-top:var(--space-4)">← Quay lại cá nhân</a>
+        </div>
+      `
+    } else {
+      try {
+        const [item, profile] = await Promise.all([fetchItemById(itemId), getProfile()])
+
+        if (item.poster_id !== profile.id) {
+          content.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state__icon">🚫</div>
+              <p class="empty-state__title">Không có quyền chỉnh sửa</p>
+              <p>Chỉ chủ tin đăng mới có thể sửa bài này.</p>
+              <a href="items.html" class="btn btn--primary" style="margin-top:var(--space-4)">Quay lại khám phá</a>
+            </div>
+          `
+        } else {
+          const isSale = item.exchange_type === 'sale'
+          const isExchange = item.exchange_type === 'traodoi'
+          const isLost = item.exchange_type === 'lost'
+          const baseDesc = stripPostMeta(item.description)
+          const exchangeWant = parseExchangeWant(item.description) || ''
+          const lostPlace = parseLostPlace(item.description) || ''
+
+          content.innerHTML = `
+            <a href="profile.html" class="btn btn--ghost btn--sm" style="margin-bottom:var(--space-4)">← Quay lại cá nhân</a>
+            <div class="page-hero">
+              <h1>Chỉnh sửa bài đăng</h1>
+              <p>Cập nhật thông tin món đồ của bạn.</p>
+            </div>
+            <form class="post-form" id="edit-form">
+              <div class="form-group">
+                <label class="form-label" for="title">Tiêu đề *</label>
+                <input class="form-input" type="text" id="title" required value="${item.title.replace(/"/g, '&quot;')}">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="description">Mô tả *</label>
+                <textarea class="form-textarea" id="description" required>${baseDesc}</textarea>
+              </div>
+              <div class="form-row" id="category-condition-row">
+                <div class="form-group">
+                  <label class="form-label" for="category">Danh mục *</label>
+                  <select class="form-select" id="category" required></select>
+                </div>
+                <div class="form-group" id="condition-group">
+                  <label class="form-label" for="condition">Tình trạng *</label>
+                  <select class="form-select" id="condition" required></select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="location">Địa điểm hẹn *</label>
+                <div class="location-picker">
+                  <div class="location-picker__toolbar">
+                    <select class="form-select" id="location-preset">
+                      <option value="">— Chọn nhanh khu vực —</option>
+                    </select>
+                    <button type="button" class="btn btn--secondary btn--sm" id="btn-locate">📍 GPS</button>
+                  </div>
+                  <input class="form-input" type="text" id="location" required readonly value="${item.location.replace(/"/g, '&quot;')}">
+                  <input type="hidden" id="latitude" value="${item.latitude ?? ''}">
+                  <input type="hidden" id="longitude" value="${item.longitude ?? ''}">
+                  <div id="location-map" class="map-canvas map-canvas--picker"></div>
+                </div>
+              </div>
+              <div id="extra-fields"></div>
+              <div class="form-group">
+                <label class="form-label" for="image">Ảnh sản phẩm</label>
+                <input class="form-input" type="file" id="image" accept="image/*">
+                <p class="form-hint">Để trống nếu giữ ảnh hiện tại</p>
+                <img class="image-preview${item.image ? ' visible' : ''}" id="image-preview" src="${item.image || ''}" alt="Preview">
+              </div>
+              <button type="submit" class="btn btn--primary" id="btn-submit">Lưu thay đổi</button>
+            </form>
+          `
+
+          function fillSelect(id, entries, selected) {
+            const sel = document.getElementById(id)
+            Object.entries(entries).forEach(([val, label]) => {
+              const opt = document.createElement('option')
+              opt.value = val
+              opt.textContent = label
+              if (val === selected) opt.selected = true
+              sel.appendChild(opt)
+            })
+          }
+
+          fillSelect('category', CATEGORY_LABELS, item.category)
+          fillSelect('condition', CONDITION_LABELS, item.condition)
+          if (isLost) {
+            document.getElementById('condition-group')?.classList.add('hidden')
+            document.getElementById('condition').required = false
+          }
+
+          await initLocationPicker({
+            location: item.location,
+            lat: item.latitude,
+            lng: item.longitude,
+          })
+
+          const extra = document.getElementById('extra-fields')
+          if (isExchange) {
+            extra.innerHTML = `<div class="form-group"><label class="form-label">Muốn đổi lấy *</label><input class="form-input" type="text" id="want" required value="${exchangeWant.replace(/"/g, '&quot;')}"></div>`
+          } else if (isSale) {
+            extra.innerHTML = `<div class="form-group"><label class="form-label">Giá bán (VNĐ) *</label><input class="form-input" type="number" id="price" required min="1000" value="${item.price || ''}"></div>`
+          } else if (isLost) {
+            extra.innerHTML = `
+              <div class="form-group">
+                <label class="form-label" for="lost_place">Nơi có thể mất *</label>
+                <input class="form-input" type="text" id="lost_place" required value="${lostPlace.replace(/"/g, '&quot;')}" placeholder="VD: Thư viện VKU, phòng A101...">
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Ngày mất</label><input class="form-input" type="date" id="lost_date" value="${item.lost_date || ''}"></div>
+                <div class="form-group"><label class="form-label">Phần thưởng</label><input class="form-input" type="text" id="reward" value="${item.reward || ''}" placeholder="VD: 50.000đ"></div>
+              </div>
+              <div class="form-group"><label class="form-label">SĐT liên hệ *</label><input class="form-input" type="tel" id="contact_phone" required value="${item.contact_phone || ''}"></div>`
+          }
+
+          let currentImage = item.image || ''
+
+          document.getElementById('image').addEventListener('change', (e) => {
+            const file = e.target.files[0]
+            const preview = document.getElementById('image-preview')
+            if (file) {
+              preview.src = URL.createObjectURL(file)
+              preview.classList.add('visible')
+            }
+          })
+
+          document.getElementById('edit-form').addEventListener('submit', async (e) => {
+            e.preventDefault()
+            const btn = document.getElementById('btn-submit')
+            btn.disabled = true
+            btn.textContent = 'Đang lưu...'
+
+            try {
+              let imageUrl = currentImage
+              const file = document.getElementById('image').files[0]
+              if (file) {
+                if (file.size > 5 * 1024 * 1024) throw new Error('Ảnh tối đa 5MB')
+                imageUrl = await uploadImage(file, profile.id)
+              }
+
+              const location = document.getElementById('location').value.trim()
+              if (!location) throw new Error('Vui lòng chọn điểm hẹn')
+
+              let description = document.getElementById('description').value.trim()
+              if (isExchange) {
+                const want = document.getElementById('want')?.value.trim()
+                if (!want) throw new Error('Vui lòng nhập món muốn đổi lấy')
+                description = `${description}\n\n🔄 Muốn đổi lấy: ${want}`
+              }
+              if (isLost) {
+                const place = document.getElementById('lost_place')?.value.trim()
+                if (!place) throw new Error('Vui lòng nhập nơi có thể mất')
+                description = `${description}\n\n📍 Nơi có thể mất: ${place}`
+              }
+
+              const payload = {
+                title: document.getElementById('title').value.trim(),
+                description,
+                category: document.getElementById('category').value,
+                condition: document.getElementById('condition').value,
+                location,
+                image: imageUrl,
+                latitude: Number(document.getElementById('latitude').value) || null,
+                longitude: Number(document.getElementById('longitude').value) || null,
+              }
+
+              if (isSale) payload.price = Number(document.getElementById('price').value)
+              if (isLost) {
+                payload.contact_phone = document.getElementById('contact_phone')?.value.trim() || ''
+                if (!payload.contact_phone) throw new Error('Vui lòng nhập SĐT liên hệ')
+                payload.lost_date = document.getElementById('lost_date')?.value || ''
+                payload.reward = document.getElementById('reward')?.value || ''
+              }
+
+              await updateItem(itemId, payload)
+              showToast('Đã cập nhật tin đăng!', 'success')
+              setTimeout(() => { window.location.href = `detail.html?id=${itemId}` }, 800)
+            } catch (err) {
+              showToast(err.message, 'error')
+              btn.disabled = false
+              btn.textContent = 'Lưu thay đổi'
+            }
+          })
+        }
+      } catch (err) {
+        content.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state__icon">😢</div>
+            <p class="empty-state__title">${err.message}</p>
+            <a href="profile.html" class="btn btn--primary" style="margin-top:var(--space-4)">← Quay lại cá nhân</a>
+          </div>
+        `
+      }
+    }
+  </script>
+</body>
+</html>

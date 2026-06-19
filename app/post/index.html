@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng tin — ĐN-UniShare</title>
+  <link rel="stylesheet" href="../../css/tokens.css">
+  <link rel="stylesheet" href="../../css/base.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/app.css">
+  <style>
+    .post-hub {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4);
+      max-width: 720px; margin: 0 auto;
+    }
+    .post-type-card {
+      display: block; text-decoration: none; color: inherit;
+      padding: var(--space-6); border-radius: var(--radius-lg);
+      border: 1px solid var(--dn-border); background: var(--dn-surface-elevated);
+      transition: all var(--duration);
+    }
+    .post-type-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-glow); }
+    .post-type-card--give:hover { border-color: rgba(34,197,94,0.4); }
+    .post-type-card--exchange:hover { border-color: rgba(59,130,246,0.4); }
+    .post-type-card--sell:hover { border-color: rgba(245,158,11,0.4); }
+    .post-type-card--lost:hover { border-color: rgba(239,68,68,0.4); }
+    .post-type-card__emoji { font-size: 2.5rem; margin-bottom: var(--space-3); }
+    .post-type-card__cta { font-size: 0.75rem; font-weight: 700; color: var(--dn-accent); margin-top: var(--space-3); }
+    @media (max-width: 520px) { .post-hub { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header id="site-header"></header>
+  <main class="page-wrap container">
+    <div class="page-hero" style="text-align:center;max-width:640px;margin:0 auto var(--space-8)">
+      <h1>Bạn muốn đăng gì?</h1>
+      <p>Chọn một trong bốn hình thức. Tin đăng sẽ được admin duyệt trước khi hiển thị.</p>
+    </div>
+
+    <div class="post-hub">
+      <a href="give/index.html" class="post-type-card post-type-card--give">
+        <div class="post-type-card__emoji">🎁</div>
+        <h3>Tặng đồ</h3>
+        <p style="font-size:0.875rem;color:var(--color-text-secondary);margin-top:var(--space-2)">Cho đi miễn phí — không thu tiền</p>
+        <span class="post-type-card__cta">Đăng tin tặng →</span>
+      </a>
+      <a href="exchange/index.html" class="post-type-card post-type-card--exchange">
+        <div class="post-type-card__emoji">🔄</div>
+        <h3>Trao đổi</h3>
+        <p style="font-size:0.875rem;color:var(--color-text-secondary);margin-top:var(--space-2)">Đổi đồ với sinh viên khác</p>
+        <span class="post-type-card__cta">Đăng tin đổi →</span>
+      </a>
+      <a href="sell/index.html" class="post-type-card post-type-card--sell">
+        <div class="post-type-card__emoji">💰</div>
+        <h3>Bán đồ</h3>
+        <p style="font-size:0.875rem;color:var(--color-text-secondary);margin-top:var(--space-2)">Thanh lý giá sinh viên + VietQR demo</p>
+        <span class="post-type-card__cta">Đăng tin bán →</span>
+      </a>
+      <a href="lost/index.html" class="post-type-card post-type-card--lost">
+        <div class="post-type-card__emoji">🔍</div>
+        <h3>Tìm đồ</h3>
+        <p style="font-size:0.875rem;color:var(--color-text-secondary);margin-top:var(--space-2)">Báo mất đồ, thẻ, sách vở...</p>
+        <span class="post-type-card__cta">Đăng tin tìm →</span>
+      </a>
+    </div>
+
+    <p style="text-align:center;margin-top:var(--space-8);font-size:0.875rem;color:var(--color-text-secondary)">
+      Muốn nhận đồ gần bạn? <a href="../nearby.html" style="color:var(--dn-accent);font-weight:600">Tìm theo điểm hẹn người đăng →</a>
+    </p>
+  </main>
+  <nav id="bottom-nav"></nav>
+  <script type="module">
+    import { requireAuth } from '../../js/auth.js'
+    import { initSiteLayout, getBasePath } from '../../js/layout.js'
+
+    await requireAuth('../../auth/login.html')
+    await initSiteLayout('post')
+
+    // Fix relative links for clean URLs
+    const base = getBasePath()
+    document.querySelectorAll('.post-hub a').forEach((a) => {
+      const path = a.getAttribute('href')
+      if (path && !path.startsWith('/') && !path.startsWith('http')) {
+        a.href = base + '/app/post/' + path
+      }
+    })
+    const nearbyLink = document.querySelector('a[href="../nearby.html"]')
+    if (nearbyLink) {
+      nearbyLink.href = base + '/app/nearby.html'
+    }
+  </script>
+</body>
+</html>

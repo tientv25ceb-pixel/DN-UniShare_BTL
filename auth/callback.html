@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đang xử lý đăng nhập...</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-card" style="text-align:center">
+      <div class="skeleton" style="width:48px;height:48px;border-radius:50%;margin:0 auto 16px"></div>
+      <h1 class="auth-card__title">Đang đăng nhập...</h1>
+      <p class="auth-card__subtitle" id="status">Vui lòng chờ trong giây lát.</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { handleOAuthCallback } from '../js/auth.js'
+
+    try {
+      await handleOAuthCallback()
+      window.location.href = '../app/items.html'
+    } catch (err) {
+      document.getElementById('status').textContent = err.message
+      setTimeout(() => {
+        window.location.href = `login.html?error=${encodeURIComponent(err.message)}`
+      }, 2500)
+    }
+  </script>
+</body>
+</html>
